@@ -7,13 +7,18 @@ import (
 )
 
 func ReadEditor(name string) ([]byte, error) {
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = "vim"
+	}
+
 	tf, err := ioutil.TempFile("", name)
 	if err != nil {
 		return nil, err
 	}
 	defer os.Remove(tf.Name())
 
-	cmd := exec.Command("sh", "-c", "editor "+tf.Name())
+	cmd := exec.Command("sh", "-c", editor+" "+tf.Name())
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

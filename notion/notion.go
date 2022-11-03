@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/dstotijn/go-notion"
-	"github.com/sanity-io/litter"
 )
 
 type httpTransport struct {
@@ -146,7 +145,7 @@ func CreateDatabasePage(notionKey, notionDatabaseId, name, body string) {
 	client := notion.NewClient(notionKey, notion.WithHTTPClient(httpClient))
 	params, _ := buildCreatePageParams(notionDatabaseId, name, body)
 
-	page, err := client.CreatePage(ctx, *params)
+	_, err := client.CreatePage(ctx, *params)
 	if err != nil {
 		log.Fatalf("Failed to create page: %v", err)
 	}
@@ -162,7 +161,50 @@ func CreateDatabasePage(notionKey, notionDatabaseId, name, body string) {
 	if err := enc.Encode(decoded); err != nil {
 		log.Fatal(err)
 	}
+}
 
-	// Pretty print parsed `notion.Page` value.
-	litter.Dump(page)
+func CreateBlock(notionKey, blockId, text string) {
+	ctx := context.Background()
+	buf := &bytes.Buffer{}
+	httpClient := &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: &httpTransport{w: buf},
+	}
+	client := notion.NewClient(notionKey, notion.WithHTTPClient(httpClient))
+
+	fetched := RetrieveBlock(notionKey, blockId)
+	pb, _ := fetched.(*notion.ParagraphBlock)
+	r := buildRichText(text)
+	pb.RichText = append(pb.RichText, r[0])
+
+	_, err := client.UpdateBlock(ctx, blockId, pb)
+	if err != nil {
+		log.Fatalf("Failed to create page: %v", err)
+	}
+
+	decoded := map[string]interface{}{}
+	if err := json.NewDecoder(buf).Decode(&decoded); err != nil {
+		log.Fatal(err)
+	}
+
+	// Pretty print JSON reponse.
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "    ")
+	if err := enc.Encode(decoded); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func RetrieveBlock(notionKey, blockId string) notion.Block {
+	ctx := context.Background()
+	buf := &bytes.Buffer{}
+	httpClient := &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: &httpTransport{w: buf},
+	}
+	client := notion.NewClient(notionKey, notion.WithHTTPClient(httpClient))
+
+	block, _ := client.FindBlockByID(ctx, blockId)
+
+	return block
 }
