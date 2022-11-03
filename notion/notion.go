@@ -136,17 +136,15 @@ func buildCreatePageParams(databaseId, name, body string) (*notion.CreatePagePar
 	return p, nil
 }
 
-func Create(name, body string) {
-	NOTION_KEY := os.Getenv("NOTION_KEY")
-	NOTION_DATABASE_ID := os.Getenv("NOTION_DATABASE_ID")
+func CreateDatabasePage(notionKey, notionDatabaseId, name, body string) {
 	ctx := context.Background()
 	buf := &bytes.Buffer{}
 	httpClient := &http.Client{
 		Timeout:   10 * time.Second,
 		Transport: &httpTransport{w: buf},
 	}
-	client := notion.NewClient(NOTION_KEY, notion.WithHTTPClient(httpClient))
-	params, _ := buildCreatePageParams(NOTION_DATABASE_ID, name, body)
+	client := notion.NewClient(notionKey, notion.WithHTTPClient(httpClient))
+	params, _ := buildCreatePageParams(notionDatabaseId, name, body)
 
 	page, err := client.CreatePage(ctx, *params)
 	if err != nil {

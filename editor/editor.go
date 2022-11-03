@@ -4,12 +4,10 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"strconv"
 )
 
-func ReadEditor() ([]byte, error) {
-	pid := os.Getpid()
-	tf, err := ioutil.TempFile("", strconv.Itoa(pid))
+func ReadEditor(name string) ([]byte, error) {
+	tf, err := ioutil.TempFile("", name)
 	if err != nil {
 		return nil, err
 	}
